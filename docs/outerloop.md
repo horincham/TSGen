@@ -1,23 +1,16 @@
 # Adaptive dataset expansion
 
-`tsgen outerloop run --config outerloop.yaml` uses your outer YAML to freeze the initial
-force field, fitting inputs, selected parameter bounds, DFT archive, and
-preprocessing settings. Paths in this outer configuration are relative to
-`project_root`, which is itself relative to the YAML. New runs use the next
-`outerloop_run_000X` directory under `out_dir`. Set `run_dir` to use a
-specific path instead. To continue the first default run, use
-`tsgen outerloop resume --run-dir output/outerloop_run_0001`.
+Run `tsgen outerloop run --config outerloop.yaml` with the initial force field,
+fitting inputs, selected parameter bounds and DFT archive. Paths resolve from
+`project_root`, which is relative to the YAML. Runs are numbered under `out_dir`
+unless you specify `run_dir`.
 
-Set `initial.labels` and `initial.holdout_ids` from the actual Explore run
-directory, such as `output/explore_run_0001`.
-If independent test labels have been collected, set `initial.test_labels`
-to `evaluation/labels/labels.csv` under that same directory.
-Supply `initial.labels` as the Explore CSV export, or as an archive with
-embedded geometries and `reference_hartree` for each successful label. The
-reference must come from an optimized geometry for that species at the
-acquisition DFT level. To keep independent test observations separate, provide
-`initial.test_labels` or a CSV with an `id` column in `initial.holdout_ids`.
-Use the same reference level for the archive, Explore and trainset routes.
+Set `initial.labels` to the Explore labels CSV or an archive containing
+geometries and `reference_hartree` for each successful label. Use the same
+DFT level for the archive, Explore and trainset routes. To keep independent
+test observations separate, set `initial.test_labels` to the Explore run's
+`evaluation/labels/labels.csv` or set `initial.holdout_ids` to a CSV with an
+`id` column.
 
 When transferring an Explore archive between machines for a new outer run,
 point the input label table's `reference_provenance_path` to the relocated
@@ -42,12 +35,10 @@ tsgen outerloop resume --run-dir output/outerloop_run_0001
 | `md` | `new_xyz` and optional `new_xyz_002`, `new_xyz_003`, etc. as unwrapped trajectory files generated with the updated force field. Supply `conditions` JSON with the `new` protocol, `coordinates: unwrapped`, and `input_hashes` keyed by MD input name. If no `md.inputs` were configured, supply `md_system` and `md_protocol` and include their SHA-256 digests as `system` and `protocol`. |
 | `evaluate` | `energies` CSV with one row per requested candidate and columns `id,species_id,reference_id,old_energy,new_energy,old_reference,new_reference`. Evaluate both force fields on the same candidates and reference geometries in kcal/mol. Supply `validation` JSON with protocol and independent metrics, or an empty `metrics` object and a `reason` when these measurements are unavailable. |
 
-AMS can be used externally for MD and export of unwrapped XYZ. A matched
-older-force-field trajectory may accompany an MD result for diagnostics.
-Only the updated force field's trajectories contribute to the candidate
-ensemble. Candidate preprocessing uses the same chemical, diversity and
-geometry settings as the linked Explore YAML. Include atom-mapped reference bond
-entries for the outer candidates in the Explore geometry screening file.
+Export unwrapped XYZ trajectories from the updated force field to build the
+candidate ensemble. Preprocessing follows the linked Explore YAML. Include
+atom-mapped reference bonds for outer candidates when bond-extension screening
+is enabled.
 
 TSGen performs DFT acquisition and relaxed-scan training-set construction
 internally using the linked Explore and trainset YAMLs. With
@@ -55,23 +46,16 @@ internally using the linked Explore and trainset YAMLs. With
 `input.log` files to the corresponding job folders. Local or Slurm mode
 uses the executable and scheduler settings from the linked YAMLs.
 
-`summary.csv` records `new_species` (ΔS), `novelty_median` (median outer
-SOAP nearest-neighbor distance), and `delta_ff` (mean absolute change in
-relative force-field energies) for each assessed cycle. The energy comparison
-uses the same species reference geometry for both force fields. TSGen picks
-a reference geometry from the initial archive for each represented species
-and freezes the first selected reference geometry for each new species.
-These geometries are used only to define the origin of the force-field
-energy comparison. Optimized DFT reference energies define the surrogate's
-separate relative-energy targets.
+`summary.csv` records the new species count, median SOAP novelty and mean
+absolute change in relative force-field energies for each cycle. Both force
+fields use the same reference geometry for each species. The surrogate's
+relative-energy targets use the optimized DFT references.
 
-Set `stop.max_cycles: 5` to cap assessment at five cycles. Set
-`stop.acquire_on_final_cycle: true` to allow one last acquisition and dataset
-update without fitting a sixth force field. After an update, `final.json`
-distinguishes the archive used to fit the force field (`ffield_fit_archive`)
-from the latest archive (`archive`). Threshold-based convergence also requires independent
-validation limits and a matching validation report. A cap or exhausted
-budget gives its own status.
+Set `stop.max_cycles` to cap assessment and `stop.acquire_on_final_cycle: true`
+to allow a final dataset update without refitting. Threshold-based convergence
+requires independent validation limits and a matching report. `final.json`
+records the fitting archive (`ffield_fit_archive`) and the latest archive
+(`archive`).
 
 ## Updating from an existing trajectory
 

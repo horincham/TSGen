@@ -21,7 +21,8 @@ Run from the repository root after installation.
 tsgen explore run --config examples/quickstart.yaml
 ```
 
-This example uses the mechanistic seeds and every stored frame of the bundled n-heptane, methylcyclohexane and toluene ReaxFF-MD trajectories. It builds a pool of SOAP cluster representatives and initializes the surrogate with both seeds and trajectory configurations. When GP uncertainty has little spread, the next batch prioritizes supported representatives that expand coverage. [Example inputs and outputs](examples/README.md)
+The example uses mechanistic seeds and downsampled ReaxFF-MD trajectories for
+n-heptane, methylcyclohexane and toluene. [Example inputs and outputs](examples/README.md)
 
 | Run Explore | `labeling.gaussian.mode` | `loop.mode` | Behavior |
 | --- | --- | --- | --- |
@@ -29,12 +30,9 @@ This example uses the mechanistic seeds and every stored frame of the bundled n-
 | Automatic on a cluster | `slurm` | `auto` | Submit Gaussian jobs with `sbatch`, poll for results and advance through the acquisition rounds. |
 | Prepare inputs only | `manual` | `step` | Write Gaussian inputs. Supply the logs and run `tsgen explore resume` to collect them and advance. |
 
-The supplied example uses `manual` and `step`. For automatic Slurm execution, change both fields and set the site partition, resources and Gaussian module under `labeling.gaussian.slurm`. Slurm also supports `step` for submitting one batch per invocation. [Complete Slurm configuration](docs/linux.md#slurm-cluster) · [Local Linux configuration](docs/linux.md#local-linux-with-gaussian)
-
-The Quickstart runs two acquisition rounds with up to six single points per
-round, uses a representative selection policy and reserves no test structures.
-The study workflow uses a grouped independent test set to measure prediction
-accuracy. [Study protocol and input contracts](docs/protocol.md)
+The supplied example uses `manual` and `step`. See the configuration for
+[local Linux](docs/linux.md#local-linux-with-gaussian) or
+[Slurm](docs/linux.md#slurm-cluster) to run Gaussian automatically.
 
 Reproducing the manuscript's numerical results requires the original study
 trajectories, split manifests, DFT labels and fitting inputs. This repository
@@ -48,11 +46,9 @@ For a sampled configuration `i` of species `g`, the GP target in kcal/mol is
 y_i = 627.5094740631 * (E_SP(i) - E_Opt(g))
 ```
 
-Both electronic energies are calculated at M06-2X/6-311G(d,p) in Hartree. The sampled configuration supplies the single-point geometry. A converged geometry optimization supplies the common species reference. All configurations of that species share the fixed optimized reference energy. The reference record retains the optimized geometry, Gaussian route, charge, multiplicity and source log. Reference optimization jobs are separate from the acquisition single-point budget.
-
-`labeling.gaussian.reference_mode: optimized` runs the species reference optimizations during acquisition. The optional `export.optimization.enabled` setting controls separate optimizations of selected fitting representatives.
-
-The study used full L2-normalized SOAP descriptors, a Matérn-3/2 Gaussian process, 10 acquisition rounds of at most 40 single points, a grouped independent test set of 100 structures and at most 120 fitting representatives. The method and data contracts are described in [protocol.md](docs/protocol.md).
+Both electronic energies are calculated at M06-2X/6-311G(d,p) in Hartree.
+Each sampled geometry supplies a single-point energy, and all configurations
+of the same species share a fixed reference energy from geometry optimization.
 
 ## Workflows
 
@@ -67,33 +63,8 @@ The study used full L2-normalized SOAP descriptors, a Matérn-3/2 Gaussian proce
 
 Gaussian 16 supplies the DFT calculations. ReaxFF evaluation, external INDEEDopt optimization and AMS MD require their respective installations and input files. See [outerloop.md](docs/outerloop.md) for the engine handoff contracts.
 
-The Quickstart creates numbered run directories under `output/quickstart/`. Pass the existing run directory to `resume` to continue a workflow.
-
-## Numerical evaluation
-
-After acquisition in a study run with a nonempty holdout, independently label
-the reserved test structures and evaluate the final surrogate.
-
-```bash
-tsgen explore label-holdout --run-dir PATH_TO_RUN
-tsgen explore evaluate --run-dir PATH_TO_RUN
-```
-
-For matched-budget replay, use a screened study pool with a fixed held-out
-split and the study acquisition policy. Supply `oracle.csv` with
-`id,e_kcalmol_rel` for every test ID and for the eligible acquisition structures
-in the replay domain. Supply `initial_ids.txt` with one initial training ID
-per line. Use a common optimized DFT reference for each species across both
-sets. Each budget counts the total number of training labels, including the
-initial labels.
-
-```bash
-tsgen benchmark run --run-dir PATH_TO_RUN --oracle oracle.csv \
-  --initial-ids initial_ids.txt --budget 40 --budget 400 --seed 0 \
-  --output benchmark.json
-```
-
-The JSON records train IDs, fixed test IDs, oracle domain size and MAE in kcal/mol. Replay budgets are independent of the prospective acquisition schedule.
+See the [study protocol](docs/protocol.md) for research inputs, independent
+evaluation and matched-budget comparisons.
 
 ## Citation and license
 

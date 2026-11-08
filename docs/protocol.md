@@ -12,23 +12,25 @@ The study used species-resolved coverage selection, then geometric screening at 
 
 Coverage cutoffs, acquisition weights, shortlist factor, random seed and scheduler resources are explicit settings. Use the original run values and manifests to reproduce the reported pool, split and label counts.
 
-The current species fingerprint uses iterative graph-neighborhood refinement
-(`species.fingerprint_version: wl_v2`). Set the same version in
-`md.fingerprint_version` for the outer loop. This separates common constitutional
-isomers that the earlier single-neighborhood fingerprint could merge. Molecular
-graphs are inferred from the configured distance cutoff. Conformations of the
-same graph share a reference. The grouping is independent of atom order.
-Existing run snapshots without a version flag retain `legacy` identity on
-resume. Use a new run for a changed identity scheme and supply matching optimized
-references for imported label archives.
+Use the same species fingerprint version in `species.fingerprint_version`
+and `md.fingerprint_version` for Explore and the outer loop. Start a new run
+if the species identity scheme changes and supply matching references for
+imported labels. Successful Gaussian optimizations write `optimized_reference.xyz`
+and record their provenance in `energy_references.provenance.json`.
 
-Successful reference optimizations write `optimized_reference.xyz` beside the
-job log and an `energy_references.provenance.json` record in the run. This records
-geometry, electronic state, method, energy and log hash. The reference is the
-geometry obtained from that species' first successful Gaussian `Opt` job.
-Vibrational frequency analysis is a separate calculation. The target is an
-electronic energy difference from this fixed geometry. Reference provenance is
-propagated into numerical evaluation and outer-cycle label handoffs.
+## Matched-budget evaluation
+
+Use a screened study run with a fixed test split and the study acquisition
+policy. Supply `oracle.csv` with `id,e_kcalmol_rel` for each test ID and the
+eligible acquisition structures in the replay domain. Use a common optimized
+reference for each species across both sets. Put one starting training ID per
+line in `initial_ids.txt`. Each budget includes those initial labels.
+
+```bash
+tsgen benchmark run --run-dir PATH_TO_RUN --oracle oracle.csv \
+  --initial-ids initial_ids.txt --budget 40 --budget 400 --seed 0 \
+  --output benchmark.json
+```
 
 ## ReaxFF fitting targets and sensitivity
 
@@ -38,10 +40,11 @@ propagated into numerical evaluation and outer-cycle label handoffs.
 
 The study used 10,000 parameter vectors and analyzed 10 repeated samples of 2,000 complete evaluations, drawn without replacement within each repeat. In TSGen, `sampling.center_initial_ffield` controls whether the initial force-field vector occupies one of the requested sample slots. TSGen averages the per-repeat normalized HSIC scores, applies the 95% cumulative rule to the mean ranking of the total objective and reports per-parameter inclusion frequency. Signed estimates remain in the output tables. Negative estimates are clipped at zero for normalization and selection. Component rankings are available for energy, geometry and charge when those targets are present and nonconstant.
 
-`tsgen sensitivity export-indeedopt --run-dir <run_dir>` exports the fitting inputs and the selected bounds. Run the reduced-space optimization with the external INDEEDopt installation. The study used center-maximin LHS, a fully connected network with two ReLU hidden layers and a linear output, Adam with MAE, Python 3.8.20, TensorFlow 2.10.1 and ten workers.
+`tsgen sensitivity export-indeedopt --run-dir <run_dir>` exports the fitting inputs and the selected bounds for optimization with INDEEDopt.
 
 ## Reactive MD and independent validation
 
-Use [outerloop.md](outerloop.md) to import MD trajectories and matched force-field evaluations. TSGen operates on exported XYZ trajectories and file-based engine results. The initial three fuel trajectories drive candidate construction. The separate n-propylbenzene simulations validate the fitted force field.
-
-The manuscript's AMS validation used a periodic box of 100 n-propylbenzene molecules at 0.15 g/cm³. After energy minimization, the system equilibrated for 5 ps at 300 K and was heated to 3500 K at 40 K/ps. The manuscript reports 200 ps of ReaxFF MD with a Nosé–Hoover chain thermostat, a 100 fs coupling time and a 0.1 fs integration step. Three trajectories used different initial velocity seeds. Additional temperatures for kinetic analysis were 2300, 2600, 2900 and 3200 K. Reproduction requires the original cell, AMS input, velocity seeds and force field.
+Use the [outer-loop guide](outerloop.md) to import MD trajectories and
+matched force-field evaluations. For independent n-propylbenzene validation,
+follow the manuscript's simulation protocol using the original AMS inputs,
+force field and initial velocity seeds.

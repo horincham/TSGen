@@ -16,19 +16,12 @@ command -v g16
 command -v formchk
 ```
 
-Gaussian receives input on stdin and writes its log on stdout. TSGen retains
-each `input.gjf`, `input.log`, process exit status and job metadata.
 Gaussian environment and scratch setup are described by the
 [Gaussian installation instructions](https://ducc.du.ac.in/wp3/wp-content/uploads/2024/04/G16_UNIX.pdf).
 
-Use `examples/quickstart.yaml` for the bundled initial acquisition example.
-For a production study, supply the molecular seed geometries, unwrapped
-trajectories, reference connectivity and split groups described in
-[protocol.md](protocol.md).
 Use the same DFT method, basis, charge and multiplicity for each sampled
-structure and its equilibrium reference. Set explicit charge and multiplicity
-for states that require them. The automatic setting derives a starting
-assignment from electron parity.
+structure and its optimized reference. Set the charge and multiplicity
+explicitly for states that require them.
 
 ## Local Linux with Gaussian
 
@@ -50,13 +43,8 @@ loop:
 ```
 
 Run `tsgen explore run --config examples/quickstart.yaml` for the bundled inputs.
-Local execution runs
-Gaussian jobs sequentially, with `nproc` cores allocated to each calculation.
-The process inherits the shell's Gaussian environment. New species generate
-a reference optimization alongside their sampled-geometry single points.
-The next GP fit waits for the required successful labels and optimized
-references. Use `tsgen explore status --run-dir PATH_TO_RUN` to inspect a run
-and `tsgen explore resume --run-dir PATH_TO_RUN` to continue it.
+Local Gaussian jobs run sequentially in the current shell environment. Use
+`tsgen explore status --run-dir PATH_TO_RUN` to inspect a run.
 
 Set the following fields in your trainset YAML to run the equilibrium
 optimizations and relaxed scans locally.
@@ -71,9 +59,7 @@ execution:
   wait_for_completion: true
 ```
 
-Run `tsgen trainset run --config trainset.yaml` with your trainset YAML. The builder
-first collects equilibrium optimizations, generates scans from the optimized
-geometries and exports the validated fitting targets. Use
+Run `tsgen trainset run --config trainset.yaml` with your trainset YAML. Use
 `tsgen trainset resume --run-dir PATH_TO_RUN` to advance an existing run.
 
 For sensitivity analysis on the same workstation, set
@@ -116,11 +102,8 @@ loop:
 tsgen explore run --config examples/quickstart.yaml
 ```
 
-Use the appropriate module name for the cluster, or put the Gaussian profile
-initialization in `extra_lines`. TSGen submits `submit.slurm` with `sbatch`,
-retains the returned job ID and collects the Gaussian logs. The generated
-scripts use LF line endings. Scratch setup must also be available in the
-compute-node environment.
+Set the Gaussian module or profile initialization in `extra_lines` and make
+the scratch directory available on the compute nodes.
 
 With `loop.mode: auto`, TSGen waits for the batch's single points and required
 reference optimizations, collects valid labels and advances in the same
@@ -138,10 +121,7 @@ For the trainset workflow, set `gaussian.mode: slurm` and
 resources and environment under its `gaussian.slurm` section.
 
 For sensitivity calculations, set `execution.mode: slurm` and configure
-`execution.slurm` in your sensitivity YAML. Inspect the generated pending
-sample list and array scripts in the run's `slurm/` directory. Diagnostic
-commands can collect failed-evaluation evidence and adjust concurrency on an
-existing prepared run.
+`execution.slurm` in your sensitivity YAML.
 
 ## Manual job execution and recovery
 
