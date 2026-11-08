@@ -1,6 +1,6 @@
 # TSGen
 
-Training Set Generator (TSGen) constructs DFT reference datasets and coordinates adaptive ReaxFF parameterization. It extracts molecular configurations from reactive trajectories, combines them with seeds, screens the candidate space and selects DFT batches using SOAP novelty and Gaussian-process uncertainty. Its outer loop returns fitted force fields to reactive MD and assesses the resulting expansion of the reference domain.
+Training Set Generator (TSGen) constructs datasets and coordinates adaptive ReaxFF parameterization. It extracts molecular configurations from reactive trajectories, combines them with seeds, screens the candidate space and selects DFT batches using SOAP novelty and Gaussian-process uncertainty. Its outer loop returns fitted force fields to reactive MD and assesses the resulting expansion of the reference domain.
 
 ## Installation
 
