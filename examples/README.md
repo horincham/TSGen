@@ -33,7 +33,9 @@ source-file/frame pairs among its deduplicated members. It describes sampling
 support in the input trajectories.
 
 The example sets two rounds of up to six single-point calculations each and
-uses a holdout size of zero.
+uses a holdout size of zero. It screens minimum distance and minimum bond
+angle. The study's bond-extension screen also requires atom-mapped reference
+connectivity. [Study protocol](../docs/protocol.md#candidate-space-and-acquisition)
 
 Manual mode writes the first batch without requiring a Gaussian installation. The console reports input loading, descriptor calculation, screening, job preparation and the wait for DFT logs. New Quickstart runs are numbered under `output/quickstart/`, starting at `explore_run_0001`.
 

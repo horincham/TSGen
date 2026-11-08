@@ -31,8 +31,9 @@ This example uses the mechanistic seeds and every stored frame of the bundled n-
 
 The supplied example uses `manual` and `step`. For automatic Slurm execution, change both fields and set the site partition, resources and Gaussian module under `labeling.gaussian.slurm`. Slurm also supports `step` for submitting one batch per invocation. [Complete Slurm configuration](docs/linux.md#slurm-cluster) · [Local Linux configuration](docs/linux.md#local-linux-with-gaussian)
 
-The Quickstart exercises acquisition and reference labeling with a small budget.
-The study workflow uses an independent held-out set to measure prediction
+The Quickstart runs two acquisition rounds with up to six single points per
+round, uses a representative selection policy and reserves no test structures.
+The study workflow uses a grouped independent test set to measure prediction
 accuracy. [Study protocol and input contracts](docs/protocol.md)
 
 Reproducing the manuscript's numerical results requires the original study
@@ -70,7 +71,8 @@ The Quickstart creates numbered run directories under `output/quickstart/`. Pass
 
 ## Numerical evaluation
 
-After acquisition, independently label the reserved test structures and evaluate the final surrogate.
+After acquisition in a study run with a nonempty holdout, independently label
+the reserved test structures and evaluate the final surrogate.
 
 ```bash
 tsgen explore label-holdout --run-dir PATH_TO_RUN
@@ -78,9 +80,12 @@ tsgen explore evaluate --run-dir PATH_TO_RUN
 ```
 
 For matched-budget replay, use a screened study pool with a fixed held-out
-split. Supply `oracle.csv` with `id,e_kcalmol_rel` and `initial_ids.txt` with
-one initial training ID per line. Use a common optimized DFT reference for
-each species in both sets.
+split and the study acquisition policy. Supply `oracle.csv` with
+`id,e_kcalmol_rel` for every test ID and for the eligible acquisition structures
+in the replay domain. Supply `initial_ids.txt` with one initial training ID
+per line. Use a common optimized DFT reference for each species across both
+sets. Each budget counts the total number of training labels, including the
+initial labels.
 
 ```bash
 tsgen benchmark run --run-dir PATH_TO_RUN --oracle oracle.csv \
