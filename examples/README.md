@@ -1,4 +1,4 @@
-# Explore Quickstart
+# Quickstart
 
 ## Inputs
 
