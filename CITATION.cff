@@ -1,0 +1,18 @@
+cff-version: "1.2.0"
+message: "If you use TSGen, please cite this software."
+title: "TSGen"
+type: software
+version: "0.2.0"
+license: MIT
+repository-code: https://github.com/horincham/TSGen
+authors:
+  - given-names: Haolin
+    family-names: Cheng
+  - given-names: Houjun
+    family-names: Zhang
+  - given-names: Changqin
+    family-names: He
+  - given-names: Yao
+    family-names: Nian
+  - given-names: You
+    family-names: Han

@@ -1,0 +1,79 @@
+# Run from the repository root. Each XYZ already contains every 100th MD frame.
+run:
+  out_dir: output/quickstart
+  name: explore
+  seed: 20260702
+  max_iters: 2
+  dft_budget: 12
+
+candidate_pool:
+  split_fragments: true
+  min_fragment_atoms: 2
+  sources:
+    - {type: seed_dir, path: examples/data/seeds}
+    - {type: traj_xyz, path: examples/data/trajectories/n_heptane.xyz}
+    - {type: traj_xyz, path: examples/data/trajectories/methylcyclohexane.xyz}
+    - {type: traj_xyz, path: examples/data/trajectories/toluene.xyz}
+  chemistry_filter:
+    enabled: true
+    allowed_elements: [C, H]
+    max_element_counts: {C: 8}
+    exclude_odd_electron: true
+    require_neutral_hydrocarbon_valence: true
+  deduplication:
+    enabled: true
+    fingerprint_tol: 0.0
+  balance:
+    enabled: true
+    by: species
+    method: representative
+    max_per_group: 12
+
+gating:
+  enabled: true
+  min_dist: 0.60
+  min_angle_deg: 45.0
+
+descriptor:
+  backend: soap
+  soap_species: [H, C]
+  normalization: l2
+
+surrogate:
+  kind: gp
+  target: e_kcalmol_rel
+  gp:
+    kernel: matern32
+    alpha: 1.0e-6
+
+species:
+  fingerprint_version: wl_v2
+  bond_tol: 1.2
+
+acquisition:
+  k_select: 6
+  trajectory_only_after_initialization: true
+  representative:
+    seed_slots: 3
+    min_support_frames: 2
+    new_species_slots: 1
+  method: sigma
+  preselect_factor: 25
+  weights: {u: 1.0, d: 0.6, new_species: 0.8}
+
+anchors:
+  enabled: false
+holdout:
+  size: 0
+
+labeling:
+  backend: gaussian
+  gaussian:
+    mode: manual
+    g16_cmd: g16
+    route: '# M062X/6-311G(d,p) SP'
+    reference_mode: optimized
+    nproc: 4
+    mem: 4GB
+loop:
+  mode: step

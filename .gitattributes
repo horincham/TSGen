@@ -1,0 +1,8 @@
+* text=auto eol=lf
+*.png binary
+*.tiff binary
+*.pdf binary
+*.npy binary
+*.npz binary
+examples/data/**/*.xyz -text
+examples/data/trajectories/*.xyz binary
